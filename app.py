@@ -4,6 +4,7 @@ import csv
 import os
 import math
 
+
 # Colors
 class Style:
     BACKGROUND_DARK = "#222222"
@@ -28,7 +29,14 @@ class CSVViewerApp:
             background=Style.BACKGROUND_DARK,
             foreground=Style.WHITE,
             fieldbackground=Style.BACKGROUND_LIGHT,
+            borderwidth=0,
             font=self.font,
+        )
+        self.style.layout(
+            "Treeview",
+            [
+                ("Treeview.treearea", {"sticky": "nswe"})
+            ],  # Simplify layout to remove borders
         )
         self.style.configure(
             "Treeview.Heading",
@@ -38,7 +46,9 @@ class CSVViewerApp:
         )
         self.style.map(
             "Treeview",
-            background=[("selected", Style.BACKGROUND_LIGHT)],  # Background color for selected rows
+            background=[
+                ("selected", Style.BACKGROUND_LIGHT)
+            ],  # Background color for selected rows
         )
 
         self.data = []
@@ -87,7 +97,10 @@ class CSVViewerApp:
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Sidebar for row details (initially hidden)
-        self.sidebar = tk.Frame(main_frame, width=200, bg=Style.BACKGROUND_DARK)
+        self.sidebar = tk.Frame(
+            main_frame, width=500, bg=Style.BACKGROUND_DARK, highlightthickness=2
+        )
+        self.sidebar.pack_propagate(False)
 
         self.sidebar_label = tk.Label(
             self.sidebar,
@@ -96,27 +109,29 @@ class CSVViewerApp:
             fg=Style.WHITE,
             font=self.font,
         )
-        self.sidebar_label.pack(anchor="n", pady=10)
+        self.sidebar_label.pack(anchor="n", pady=5)
 
         self.row_details = tk.Text(
             self.sidebar,
             wrap=tk.WORD,
             bg=Style.BACKGROUND_DARK,
             fg=Style.WHITE,
+            highlightthickness=0,  # Remove the focus border
+            bd=0,  # Remove the border width
             state="disabled",
             font=self.font,
         )
-        self.row_details.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.row_details.pack(fill=tk.BOTH, expand=True)
 
         close_button = tk.Label(
             self.sidebar,
-            text="x",
+            text="[<]",
             bg=Style.BACKGROUND_DARK,
-            fg="pink",
+            fg=Style.WHITE,
             font=("Mono", 20, "bold"),
             cursor="hand2",
         )
-        close_button.pack(anchor="ne", padx=5, pady=5)
+        close_button.pack(anchor="nw", padx=5, pady=5)
         close_button.bind("<Button-1>", lambda e: self.hide_sidebar())
 
     def load_csv(self):
@@ -150,6 +165,12 @@ class CSVViewerApp:
             self.populate_table()
 
     def populate_table(self):
+        if self.tree["columns"]:
+            column_widths = {
+                col: self.tree.column(col, width=None) for col in self.tree["columns"]
+            }
+        else:
+            column_widths = {}
         # Clear existing data
         self.tree.delete(*self.tree.get_children())
         self.tree["columns"] = self.headers
@@ -158,7 +179,7 @@ class CSVViewerApp:
             self.tree.heading(
                 col, text=col, anchor="w", command=lambda c=col: self.sort_by_column(c)
             )
-            self.tree.column(col, anchor="w")
+            self.tree.column(col, anchor="w", width=column_widths.get(col, 100))
 
         for row in self.data:
             self.tree.insert("", "end", values=row)
@@ -175,7 +196,7 @@ class CSVViewerApp:
 
         self.sidebar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.row_details.configure(state="normal")
+        self.row_details.configure(state="normal", padx=10, pady=10)
         self.row_details.delete(1.0, tk.END)
 
         for header, value in zip(self.headers, row_data):
@@ -199,7 +220,7 @@ class CSVViewerApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    
+
     # Get the screen width and height
     screen_width = math.floor(root.winfo_screenwidth() * 0.8)
     screen_height = math.floor(root.winfo_screenheight() * 0.8)
