@@ -10,7 +10,7 @@ class Style:
     BACKGROUND_LIGHT = "#555555"
     WHITE = "#dddddd"
     FONT_MAIN = "Courier New"
-    FONT_SIZE_MAIN = 12
+    FONT_SIZE_MAIN = 15
 
 
 class CSVViewerApp:
