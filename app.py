@@ -2,12 +2,44 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import csv
 import os
+import math
+
+# Colors
+class Style:
+    BACKGROUND_DARK = "#222222"
+    BACKGROUND_LIGHT = "#555555"
+    WHITE = "#dddddd"
+    FONT_MAIN = "Courier New"
+    FONT_SIZE_MAIN = 12
 
 
 class CSVViewerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("CSV Viewer")
+
+        # Set a uniform font and treeview background color
+        self.font = (Style.FONT_MAIN, Style.FONT_SIZE_MAIN)  # Monospace font
+
+        self.style = ttk.Style()
+        self.style.theme_use("clam")  # Use the "clam" theme for better customization
+        self.style.configure(
+            "Treeview",
+            background=Style.BACKGROUND_DARK,
+            foreground=Style.WHITE,
+            fieldbackground=Style.BACKGROUND_LIGHT,
+            font=self.font,
+        )
+        self.style.configure(
+            "Treeview.Heading",
+            font=self.font,
+            foreground=Style.WHITE,
+            background=Style.BACKGROUND_LIGHT,
+        )
+        self.style.map(
+            "Treeview",
+            background=[("selected", Style.BACKGROUND_LIGHT)],  # Background color for selected rows
+        )
 
         self.data = []
         self.headers = []
@@ -50,33 +82,38 @@ class CSVViewerApp:
         self.tree.bind("<Down>", self.show_row_details)
 
         # Add vertical scrollbar
-        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        vsb = ttk.Scrollbar(main_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Sidebar for row details (initially hidden)
-        self.sidebar = tk.Frame(main_frame, width=200, bg="#333333")
+        self.sidebar = tk.Frame(main_frame, width=200, bg=Style.BACKGROUND_DARK)
 
         self.sidebar_label = tk.Label(
             self.sidebar,
             text="Row Details",
-            bg="#333333",
-            fg="white",
-            font=("Arial", 12, "bold"),
+            bg=Style.BACKGROUND_DARK,
+            fg=Style.WHITE,
+            font=self.font,
         )
         self.sidebar_label.pack(anchor="n", pady=10)
 
         self.row_details = tk.Text(
-            self.sidebar, wrap=tk.WORD, bg="#444444", fg="white", state="disabled"
+            self.sidebar,
+            wrap=tk.WORD,
+            bg=Style.BACKGROUND_DARK,
+            fg=Style.WHITE,
+            state="disabled",
+            font=self.font,
         )
         self.row_details.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         close_button = tk.Label(
             self.sidebar,
             text="x",
-            bg="#333333",
-            fg="white",
-            font=("Arial", 20, "bold"),
+            bg=Style.BACKGROUND_DARK,
+            fg="pink",
+            font=("Mono", 20, "bold"),
             cursor="hand2",
         )
         close_button.pack(anchor="ne", padx=5, pady=5)
@@ -92,7 +129,7 @@ class CSVViewerApp:
         # Save last opened file path
         with open(self.last_file_path, "w") as file:
             file.write(file_path)
-            
+
         self.root.focus_force()
 
     def load_last_file(self):
@@ -127,7 +164,6 @@ class CSVViewerApp:
             self.tree.insert("", "end", values=row)
 
     def show_row_details(self, event):
-        # Delay the update to ensure Treeview state is up-to-date ... Is there a better way?
         self.root.after(1, self.update_row_details)
 
     def update_row_details(self):
@@ -160,8 +196,14 @@ class CSVViewerApp:
 
         self.populate_table()
 
+
 if __name__ == "__main__":
     root = tk.Tk()
+    
+    # Get the screen width and height
+    screen_width = math.floor(root.winfo_screenwidth() * 0.8)
+    screen_height = math.floor(root.winfo_screenheight() * 0.8)
+
     app = CSVViewerApp(root)
-    root.geometry("800x600")
+    root.geometry(f"{screen_width}x{screen_height}")
     root.mainloop()
