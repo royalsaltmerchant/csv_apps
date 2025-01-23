@@ -200,7 +200,7 @@ class CSVViewerApp:
         self.row_details.delete(1.0, tk.END)
 
         for header, value in zip(self.headers, row_data):
-            self.row_details.insert(tk.END, f"{header}: {value}\n")
+            self.row_details.insert(tk.END, f"{header}: {value}\n\n")
 
         self.row_details.configure(state="disabled")
 
