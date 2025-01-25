@@ -158,7 +158,7 @@ class CSVViewerApp:
 
     def load_file(self, file_path):
         self.current_file_path = file_path
-        with open(file_path, mode="r", encoding="utf-8-sig") as file:
+        with open(file_path, mode="r", encoding="utf-8") as file:
             reader = csv.reader(file)
             self.data = list(reader)
 
@@ -172,7 +172,7 @@ class CSVViewerApp:
             return
 
         with open(
-            self.current_file_path, mode="w", newline="", encoding="utf-8-sig"
+            self.current_file_path, mode="w", newline="", encoding="utf-8"
         ) as file:
             writer = csv.writer(file)
             writer.writerow(self.headers)
