@@ -51,6 +51,8 @@ class CSVViewerApp:
             ],  # Background color for selected rows
         )
 
+        self.sidebar_visible = False
+        self.current_file_path = None
         self.data = []
         self.headers = []
         self.app_name = "CSVViewerApp"
@@ -90,6 +92,7 @@ class CSVViewerApp:
         self.tree.bind("<ButtonRelease-1>", self.show_row_details)
         self.tree.bind("<Up>", self.show_row_details)
         self.tree.bind("<Down>", self.show_row_details)
+        self.tree.bind("<Double-1>", self.open_edit_window)
 
         # Add vertical scrollbar
         vsb = ttk.Scrollbar(main_frame, orient="vertical", command=self.tree.yview)
@@ -141,7 +144,6 @@ class CSVViewerApp:
 
         self.load_file(file_path)
 
-        # Save last opened file path
         with open(self.last_file_path, "w") as file:
             file.write(file_path)
 
@@ -155,6 +157,7 @@ class CSVViewerApp:
                     self.load_file(file_path)
 
     def load_file(self, file_path):
+        self.current_file_path = file_path
         with open(file_path, mode="r", encoding="utf-8-sig") as file:
             reader = csv.reader(file)
             self.data = list(reader)
@@ -163,6 +166,85 @@ class CSVViewerApp:
             self.headers = self.data[0]
             self.data = self.data[1:]
             self.populate_table()
+
+    def save_to_file(self):
+        if not self.current_file_path:
+            return
+
+        with open(
+            self.current_file_path, mode="w", newline="", encoding="utf-8-sig"
+        ) as file:
+            writer = csv.writer(file)
+            writer.writerow(self.headers)
+            writer.writerows(self.data)
+
+    def open_edit_window(self, event=None):
+        selected_item = self.tree.focus()
+        if not selected_item:
+            return
+
+        row_data = self.tree.item(selected_item, "values")
+
+        popup = tk.Toplevel(self.root)
+        popup.title("Edit Row")
+        popup.geometry("500x400")
+        popup.config(bg=Style.BACKGROUND_DARK)
+
+        edit_entries = []
+
+        for i, (header, value) in enumerate(zip(self.headers, row_data)):
+            frame = tk.Frame(popup, bg=Style.BACKGROUND_DARK)
+            frame.pack(fill=tk.X, pady=5)
+
+            label = tk.Label(
+                frame, text=header, bg=Style.BACKGROUND_DARK, fg=Style.WHITE, font=self.font
+            )
+            label.pack(side=tk.LEFT, padx=5)
+
+            text_widget = tk.Text(
+                frame,
+                font=self.font,
+                bg=Style.BACKGROUND_LIGHT,
+                fg=Style.WHITE,
+                wrap=tk.WORD,
+                height=3,
+                width=40,
+            )
+            text_widget.insert("1.0", value)
+            text_widget.pack(side=tk.RIGHT, fill=tk.X, expand=True, padx=5)
+
+            edit_entries.append(text_widget)
+
+        def save_changes():
+            updated_values = [text_widget.get("1.0", "end-1c") for text_widget in edit_entries]
+
+            self.tree.item(selected_item, values=updated_values)
+
+            item_index = self.tree.index(selected_item)
+            self.data[item_index] = updated_values
+            
+            if self.sidebar_visible:
+                self.root.after(1, self.update_row_details)
+
+            self.save_to_file()
+
+            popup.destroy()
+
+        save_button = tk.Button(
+            popup,
+            text="Save",
+            command=save_changes,
+            font=self.font,
+        )
+        save_button.pack(pady=10)
+
+        cancel_button = tk.Button(
+            popup,
+            text="Cancel",
+            command=popup.destroy,
+            font=self.font,
+        )
+        cancel_button.pack(pady=5)
 
     def populate_table(self):
         if self.tree["columns"]:
@@ -185,6 +267,7 @@ class CSVViewerApp:
             self.tree.insert("", "end", values=row)
 
     def show_row_details(self, event):
+        self.sidebar_visible = True
         self.root.after(1, self.update_row_details)
 
     def update_row_details(self):
@@ -205,6 +288,7 @@ class CSVViewerApp:
         self.row_details.configure(state="disabled")
 
     def hide_sidebar(self):
+        self.sidebar_visible = False
         self.sidebar.pack_forget()
 
     def sort_by_column(self, column):
