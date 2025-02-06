@@ -89,9 +89,7 @@ class CSVViewerApp:
 
         self.tree = ttk.Treeview(table_frame, show="headings")
         self.tree.pack(fill=tk.BOTH, expand=True)
-        self.tree.bind("<ButtonRelease-1>", self.show_row_details)
-        self.tree.bind("<Up>", self.show_row_details)
-        self.tree.bind("<Down>", self.show_row_details)
+        self.tree.bind("<<TreeviewSelect>>", self.update_row_details)
         self.tree.bind("<Double-1>", self.open_edit_window)
 
         # Add vertical scrollbar
@@ -224,7 +222,7 @@ class CSVViewerApp:
             self.data[item_index] = updated_values
             
             if self.sidebar_visible:
-                self.root.after(1, self.update_row_details)
+                self.update_row_details
 
             self.save_to_file()
 
@@ -266,12 +264,9 @@ class CSVViewerApp:
         for row in self.data:
             self.tree.insert("", "end", values=row)
 
-    def show_row_details(self, event):
+    def update_row_details(self, event):
         self.sidebar_visible = True
-        self.root.after(1, self.update_row_details)
-
-    def update_row_details(self):
-        selected_item = self.tree.focus()
+        selected_item = self.tree.selection()
         if not selected_item:
             return
 
