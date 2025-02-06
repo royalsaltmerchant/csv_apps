@@ -222,7 +222,7 @@ class CSVViewerApp:
             self.data[item_index] = updated_values
             
             if self.sidebar_visible:
-                self.update_row_details
+                self.update_row_details(None) # None instead of an 'event'
 
             self.save_to_file()
 
