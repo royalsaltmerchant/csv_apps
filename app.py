@@ -74,14 +74,16 @@ class CSVViewerApp:
         self.root.config(menu=menu_bar)
 
         file_menu = tk.Menu(menu_bar, tearoff=0)
+        edit_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Open File", command=self.load_csv)
-        file_menu.add_separator()
-        file_menu.add_command(label="Insert Row", command=self.new_row)
-        file_menu.add_separator()
-        file_menu.add_command(label="Remove Row", command=self.remove_row)
+        menu_bar.add_cascade(label="Edit", menu=edit_menu)
+
+        file_menu.add_command(label="Open File", command=self.load_csv, )
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
+
+        edit_menu.add_command(label="Insert Row", command=self.new_row)
+        edit_menu.add_command(label="Remove Row", command=self.remove_row)
 
         # Frame for table and sidebar
         main_frame = tk.Frame(self.root)
