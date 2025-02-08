@@ -95,8 +95,12 @@ class CSVViewerApp:
 
         self.tree = ttk.Treeview(table_frame, show="headings")
         self.tree.pack(fill=tk.BOTH, expand=True)
+
+        # Commands
         self.tree.bind("<<TreeviewSelect>>", self.update_row_details)
         self.tree.bind("<Double-1>", self.open_edit_window)
+        self.tree.bind("<Command-i>", self.new_row)
+        self.tree.bind("<Command-r>", self.remove_row)
 
         # Add vertical scrollbar
         vsb = ttk.Scrollbar(main_frame, orient="vertical", command=self.tree.yview)
@@ -182,7 +186,7 @@ class CSVViewerApp:
             writer.writerow(self.headers)
             writer.writerows(self.data)
 
-    def new_row(self):
+    def new_row(self, event):
         if not self.data:
             return
         
@@ -196,7 +200,7 @@ class CSVViewerApp:
         self.tree.focus(new_tree_entry)
         self.open_edit_window()
 
-    def remove_row(self):
+    def remove_row(self, event):
         if not self.data:
             return
         
