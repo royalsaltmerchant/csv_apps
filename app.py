@@ -75,7 +75,11 @@ class CSVViewerApp:
 
         file_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Load CSV", command=self.load_csv)
+        file_menu.add_command(label="Open File", command=self.load_csv)
+        file_menu.add_separator()
+        file_menu.add_command(label="Insert Row", command=self.new_row)
+        file_menu.add_separator()
+        file_menu.add_command(label="Remove Row", command=self.remove_row)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
@@ -176,6 +180,34 @@ class CSVViewerApp:
             writer.writerow(self.headers)
             writer.writerows(self.data)
 
+    def new_row(self):
+        if not self.data:
+            return
+        
+        new_data = []
+        for _ in self.headers:
+            new_data.append('')
+        self.data.append(new_data)
+        
+        new_tree_entry = self.tree.insert("", "end", values=new_data)
+        self.tree.selection_set(new_tree_entry)
+        self.tree.focus(new_tree_entry)
+        self.open_edit_window()
+
+    def remove_row(self):
+        if not self.data:
+            return
+        
+        selected_item = self.tree.focus()
+        if not selected_item:
+            return
+
+        item_index = self.tree.index(selected_item)
+        del self.data[item_index]
+        self.save_to_file()
+        self.hide_sidebar()
+        self.populate_table()
+        
     def open_edit_window(self, event=None):
         selected_item = self.tree.focus()
         if not selected_item:
