@@ -1,13 +1,12 @@
 ID,Name,Age,Salary,Department
 1,User713,65,49417.57,Finance
 2,Sue,88,232132,Finance
-3,User793,56,87212.04,Operations
+3,User793,57,87212.04,Operations
 4,User267,65,113517.13,Marketing
 6,User625,20,102413.66,Operations
 7,User272,21,49739.0,Operations
-8,User143,42,89213.37,IT
+8,User145,42,89213.37,IT
 9,User732,55,33456.03,Finance
-10,James,44,123213.22,Finance
 11,Kyle,69,422000.00,IT
 12,Dude,420,444444,Yes
-13,Guy,9999,231321,Yes
+13,Sam,33,43232,IT

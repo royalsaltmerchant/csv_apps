@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog
 import csv
 import os
 import math
+import uuid
 
 from lib import detect_delimiter, detect_encoding
 
@@ -21,7 +22,8 @@ class CSVState:
     encoding: str
     delimiter: str
     headers: list[str]
-    data: list[list[str]]
+    data: dict[dict[str]]
+    display_data: dict[dict[str]]
     sidebar_visible: bool
 
     def __init__(self):
@@ -29,7 +31,8 @@ class CSVState:
         self.encoding = "utf-8"  # Default encoding
         self.delimiter = ","  # Default CSV delimiter
         self.headers = []  # List of column headers
-        self.data = []  # List of rows, each row is a list of strings
+        self.data = {}  # Dict of rows
+        self.display_data = {}  # Dict of rows
         self.sidebar_visible = False  # Track sidebar visibility
 
 class CSVViewerApp(CSVState):
@@ -98,6 +101,7 @@ class CSVViewerApp(CSVState):
         file_menu.add_command(label="Exit", command=self.root.quit)
 
         edit_menu.add_command(label="Insert Row", command=self.new_row)
+        edit_menu.add_command(label="Edit Row", command=lambda: self.open_edit_window(create_new=False))
         edit_menu.add_command(label="Remove Row", command=self.remove_row)
 
         # Frame for table and sidebar
@@ -115,7 +119,7 @@ class CSVViewerApp(CSVState):
 
         # Commands
         self.tree.bind("<<TreeviewSelect>>", self.update_sidebar_info)
-        self.tree.bind("<Double-1>", self.open_edit_window)
+        self.tree.bind("<Double-1>", lambda e: self.open_edit_window(event=e, create_new=False))
         self.tree.bind("<Command-i>", self.new_row)
         self.tree.bind("<Command-r>", self.remove_row)
 
@@ -160,7 +164,10 @@ class CSVViewerApp(CSVState):
             cursor="hand2",
         )
         close_button.pack(anchor="nw", padx=5, pady=5)
-        close_button.bind("<Button-1>", lambda e: self.hide_sidebar())
+        close_button.bind("<Button-1>", lambda e: self.hide_sidebar(e))
+
+    def update_display_data(self):
+        self.display_data = self.data
 
     def load_csv(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
@@ -189,13 +196,14 @@ class CSVViewerApp(CSVState):
         try:
             with open(file_path, mode="r", encoding=self.encoding) as file:
                 reader = csv.reader(file, quotechar='"', delimiter=self.delimiter)
-                self.data = list(reader)
+                list_from_reader = list(reader)
 
-            if self.data:
+            if list_from_reader:
                 # Update data
-                self.headers = self.data[0]
-                self.data = self.data[1:]
+                self.headers = list_from_reader[0]
+                self.data = {str(uuid.uuid4()): row for row in list_from_reader[1:]}
                 # Update UI
+                self.update_display_data()
                 self.populate_table()
         except Exception as e:
             tk.messagebox.showerror("Error", f"Failed to load CSV: {str(e)}")
@@ -209,37 +217,47 @@ class CSVViewerApp(CSVState):
         ) as file:
             writer = csv.writer(file, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(self.headers)
-            writer.writerows(self.data)
+            writer.writerows(self.data.values())
 
     def new_row(self, event=None):
         if not self.data:
             return
         
+        new_uuid = uuid.uuid4()
         new_data = []
         for _ in self.headers:
             new_data.append('')
-        self.data.append(new_data)
-        
-        new_tree_entry = self.tree.insert("", "end", values=new_data)
+        new_tree_entry = self.tree.insert("", "end", iid=new_uuid, values=new_data)
         self.tree.selection_set(new_tree_entry)
-        self.tree.focus(new_tree_entry)
-        self.open_edit_window()
+        self.open_edit_window(create_new=True)
 
     def remove_row(self, event=None):
         if not self.data:
             return
         
-        selected_item = self.tree.focus()
+        # First remove from UI
+        selected_item = self.tree.selection()
         if not selected_item:
-            return
+            return None
+        selected_item_uuid = selected_item[0]
+        self.tree.delete(selected_item)
 
-        item_index = self.tree.index(selected_item)
-        del self.data[item_index]
-        self.save_to_file()
-        self.populate_table()
+        self.hide_sidebar()
+
+        # Remove from real data if it has been saved
+        if self.data.get(selected_item_uuid):
+            del self.data[selected_item_uuid]
+            self.save_to_file()
+            self.update_display_data()
+            self.populate_table()
         
-    def open_edit_window(self, event=None):
-        selected_item = self.tree.focus()
+    def open_edit_window(self, create_new: bool=False, event=None):
+        def handle_cancel():
+            if create_new:
+                self.remove_row()
+            popup.destroy()
+
+        selected_item = self.tree.selection()
         if not selected_item:
             return
 
@@ -247,14 +265,15 @@ class CSVViewerApp(CSVState):
 
         popup = tk.Toplevel(self.root)
         popup.title("Edit Row")
-        popup.geometry("500x400")
         popup.config(bg=Style.BACKGROUND_DARK)
+        # Bind for on close
+        popup.protocol("WM_DELETE_WINDOW", handle_cancel)
 
         edit_entries = []
 
-        for i, (header, value) in enumerate(zip(self.headers, row_data)):
+        for _, (header, value) in enumerate(zip(self.headers, row_data)):
             frame = tk.Frame(popup, bg=Style.BACKGROUND_DARK)
-            frame.pack(fill=tk.X, pady=5)
+            frame.pack(fill=tk.X, pady=5, expand=True)
 
             label = tk.Label(
                 frame, text=header, bg=Style.BACKGROUND_DARK, fg=Style.WHITE, font=self.font
@@ -267,7 +286,7 @@ class CSVViewerApp(CSVState):
                 bg=Style.BACKGROUND_LIGHT,
                 fg=Style.WHITE,
                 wrap=tk.WORD,
-                height=3,
+                height=2,
                 width=40,
             )
             text_widget.insert("1.0", value)
@@ -277,18 +296,17 @@ class CSVViewerApp(CSVState):
 
         def save_changes():
             updated_values = [text_widget.get("1.0", "end-1c") for text_widget in edit_entries]
+            self.data[selected_item[0]] = updated_values  # Correctly update existing row
+            self.tree.item(selected_item, values=updated_values)  # Reflect the update in the UI
 
-            self.tree.item(selected_item, values=updated_values)
-
-            item_index = self.tree.index(selected_item)
-            self.data[item_index] = updated_values
-            
             if self.sidebar_visible:
                 self.update_sidebar_info() # None instead of an 'event'
 
-            self.save_to_file()
-
             popup.destroy()
+            self.save_to_file()
+            if not create_new:
+                self.update_display_data()
+                self.populate_table()
 
         save_button = tk.Button(
             popup,
@@ -301,15 +319,12 @@ class CSVViewerApp(CSVState):
         cancel_button = tk.Button(
             popup,
             text="Cancel",
-            command=popup.destroy,
+            command=handle_cancel,
             font=self.font,
         )
         cancel_button.pack(pady=5)
 
     def populate_table(self):
-        # Always hide sidebar when refresh
-        self.hide_sidebar()
-
         if self.tree["columns"]:
             column_widths = {
                 col: self.tree.column(col, width=None) for col in self.tree["columns"]
@@ -326,8 +341,8 @@ class CSVViewerApp(CSVState):
             )
             self.tree.column(col, anchor="w", width=column_widths.get(col, 100))
 
-        for row in self.data:
-            self.tree.insert("", "end", values=row)
+        for uuid, row in self.display_data.items():
+            self.tree.insert("", "end", iid=uuid, values=row)
 
     def update_sidebar_info(self, event=None):
         self.sidebar_visible = True
@@ -347,7 +362,7 @@ class CSVViewerApp(CSVState):
 
         self.row_details.configure(state="disabled")
 
-    def hide_sidebar(self):
+    def hide_sidebar(self, event=False):
         self.sidebar_visible = False
         self.sidebar.pack_forget()
 
@@ -355,11 +370,17 @@ class CSVViewerApp(CSVState):
         col_index = self.headers.index(column)
 
         try:
-            self.data.sort(key=lambda x: float(x[col_index]))  # Numeric sort
+            # Convert dictionary to list of tuples [(uuid, row_list)]
+            sorted_list = sorted(self.display_data.items(), key=lambda x: float(x[1][col_index]))  # Numeric sort
         except ValueError:
-            self.data.sort(key=lambda x: x[col_index])  # String sort
+            sorted_list = sorted(self.display_data.items(), key=lambda x: x[1][col_index])  # String sort
 
+        # Convert back to dictionary
+        self.display_data = dict(sorted_list)
+
+        # Repopulate the table
         self.populate_table()
+
 
 
 if __name__ == "__main__":
