@@ -4,6 +4,8 @@ import csv
 import os
 import math
 
+from lib import detect_delimiter, detect_encoding
+
 
 # Colors
 class Style:
@@ -13,9 +15,26 @@ class Style:
     FONT_MAIN = "Courier New"
     FONT_SIZE_MAIN = 15
 
+class CSVState:
+    """Tracks CSV-related state variables with type annotations."""
+    current_file_path: str | None
+    encoding: str
+    delimiter: str
+    headers: list[str]
+    data: list[list[str]]
+    sidebar_visible: bool
 
-class CSVViewerApp:
-    def __init__(self, root):
+    def __init__(self):
+        self.current_file_path = None  # Path to the CSV file
+        self.encoding = "utf-8"  # Default encoding
+        self.delimiter = ","  # Default CSV delimiter
+        self.headers = []  # List of column headers
+        self.data = []  # List of rows, each row is a list of strings
+        self.sidebar_visible = False  # Track sidebar visibility
+
+class CSVViewerApp(CSVState):
+    def __init__(self, root: tk.Tk):
+        super().__init__()
         self.root = root
         self.root.title("CSV Viewer")
 
@@ -51,10 +70,6 @@ class CSVViewerApp:
             ],  # Background color for selected rows
         )
 
-        self.sidebar_visible = False
-        self.current_file_path = None
-        self.data = []
-        self.headers = []
         self.app_name = "CSVViewerApp"
         self.app_support_dir = os.path.join(
             os.path.expanduser("~"), "Library", "Application Support", self.app_name
@@ -88,16 +103,18 @@ class CSVViewerApp:
         # Frame for table and sidebar
         main_frame = tk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True)
+        # main_frame.pack_propagate(False)
 
         # Table Frame
         table_frame = tk.Frame(main_frame)
         table_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        table_frame.pack_propagate(False)
 
         self.tree = ttk.Treeview(table_frame, show="headings")
         self.tree.pack(fill=tk.BOTH, expand=True)
 
         # Commands
-        self.tree.bind("<<TreeviewSelect>>", self.update_row_details)
+        self.tree.bind("<<TreeviewSelect>>", self.update_sidebar_info)
         self.tree.bind("<Double-1>", self.open_edit_window)
         self.tree.bind("<Command-i>", self.new_row)
         self.tree.bind("<Command-r>", self.remove_row)
@@ -109,7 +126,7 @@ class CSVViewerApp:
 
         # Sidebar for row details (initially hidden)
         self.sidebar = tk.Frame(
-            main_frame, width=500, bg=Style.BACKGROUND_DARK, highlightthickness=2
+            main_frame, width=400, bg=Style.BACKGROUND_DARK, highlightthickness=2
         )
         self.sidebar.pack_propagate(False)
 
@@ -166,27 +183,35 @@ class CSVViewerApp:
 
     def load_file(self, file_path):
         self.current_file_path = file_path
-        with open(file_path, mode="r", encoding="utf-8") as file:
-            reader = csv.reader(file)
-            self.data = list(reader)
+        self.encoding = detect_encoding(file_path)
+        self.delimiter = detect_delimiter(self.current_file_path, self.encoding)
+        
+        try:
+            with open(file_path, mode="r", encoding=self.encoding) as file:
+                reader = csv.reader(file, quotechar='"', delimiter=self.delimiter)
+                self.data = [row for row in reader if any(row)]
 
-        if self.data:
-            self.headers = self.data[0]
-            self.data = self.data[1:]
-            self.populate_table()
+            if self.data:
+                # Update data
+                self.headers = self.data[0]
+                self.data = self.data[1:]
+                # Update UI
+                self.populate_table()
+        except Exception as e:
+            tk.messagebox.showerror("Error", f"Failed to load CSV: {str(e)}")
 
     def save_to_file(self):
         if not self.current_file_path:
             return
 
         with open(
-            self.current_file_path, mode="w", newline="", encoding="utf-8"
+            self.current_file_path, mode="w", newline="", encoding=self.encoding
         ) as file:
-            writer = csv.writer(file)
+            writer = csv.writer(file, delimiter=self.delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(self.headers)
             writer.writerows(self.data)
 
-    def new_row(self, event):
+    def new_row(self, event=None):
         if not self.data:
             return
         
@@ -200,7 +225,7 @@ class CSVViewerApp:
         self.tree.focus(new_tree_entry)
         self.open_edit_window()
 
-    def remove_row(self, event):
+    def remove_row(self, event=None):
         if not self.data:
             return
         
@@ -211,7 +236,6 @@ class CSVViewerApp:
         item_index = self.tree.index(selected_item)
         del self.data[item_index]
         self.save_to_file()
-        self.hide_sidebar()
         self.populate_table()
         
     def open_edit_window(self, event=None):
@@ -260,7 +284,7 @@ class CSVViewerApp:
             self.data[item_index] = updated_values
             
             if self.sidebar_visible:
-                self.update_row_details(None) # None instead of an 'event'
+                self.update_sidebar_info() # None instead of an 'event'
 
             self.save_to_file()
 
@@ -283,6 +307,9 @@ class CSVViewerApp:
         cancel_button.pack(pady=5)
 
     def populate_table(self):
+        # Always hide sidebar when refresh
+        self.hide_sidebar()
+
         if self.tree["columns"]:
             column_widths = {
                 col: self.tree.column(col, width=None) for col in self.tree["columns"]
@@ -302,7 +329,7 @@ class CSVViewerApp:
         for row in self.data:
             self.tree.insert("", "end", values=row)
 
-    def update_row_details(self, event):
+    def update_sidebar_info(self, event=None):
         self.sidebar_visible = True
         selected_item = self.tree.selection()
         if not selected_item:
@@ -328,9 +355,9 @@ class CSVViewerApp:
         col_index = self.headers.index(column)
 
         try:
-            self.data.sort(key=lambda x: float(x[col_index]))
+            self.data.sort(key=lambda x: float(x[col_index]))  # Numeric sort
         except ValueError:
-            self.data.sort(key=lambda x: x[col_index])
+            self.data.sort(key=lambda x: x[col_index])  # String sort
 
         self.populate_table()
 
