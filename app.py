@@ -189,7 +189,7 @@ class CSVViewerApp(CSVState):
         try:
             with open(file_path, mode="r", encoding=self.encoding) as file:
                 reader = csv.reader(file, quotechar='"', delimiter=self.delimiter)
-                self.data = [row for row in reader if any(row)]
+                self.data = list(reader)
 
             if self.data:
                 # Update data
