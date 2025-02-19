@@ -104,10 +104,31 @@ class CSVViewerApp(CSVState):
         edit_menu.add_command(label="Edit Row", command=lambda: self.open_edit_window(create_new=False))
         edit_menu.add_command(label="Remove Row", command=self.remove_row)
 
+        # Frame for search
+        search_frame = tk.Frame(self.root, bg=Style.BACKGROUND_DARK)
+        search_frame.pack(fill=tk.X)
+
+        search_label = tk.Label(
+            search_frame, text="Search:", bg=Style.BACKGROUND_DARK, fg=Style.WHITE, font=self.font
+        )
+        search_label.pack(side=tk.LEFT, padx=5)
+
+        self.search_var = tk.StringVar()
+        search_entry = tk.Entry(search_frame, textvariable=self.search_var, font=self.font)
+        search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        
+        search_entry.bind("<Return>", self.search_data)  # Bind Enter key
+
+        search_button = tk.Button(
+            search_frame, text="Search", command=self.search_data, font=self.font
+        )
+        search_button.pack(side=tk.RIGHT, padx=5)
+
         # Frame for table and sidebar
         main_frame = tk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True)
         # main_frame.pack_propagate(False)
+        
 
         # Table Frame
         table_frame = tk.Frame(main_frame)
@@ -168,6 +189,20 @@ class CSVViewerApp(CSVState):
 
     def update_display_data(self):
         self.display_data = self.data
+
+    def search_data(self, event=None):
+        query = self.search_var.get().strip().lower()
+        
+        if not query:
+            self.update_display_data()  # Reset to full dataset
+        else:
+            # Filter rows where any column contains the query
+            self.display_data = {
+                uuid: row for uuid, row in self.data.items() if any(query in str(value).lower() for value in row)
+            }
+
+        self.populate_table()
+
 
     def load_csv(self):
         file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
@@ -306,7 +341,6 @@ class CSVViewerApp(CSVState):
             self.save_to_file()
             if not create_new:
                 self.update_display_data()
-                self.populate_table()
 
         save_button = tk.Button(
             popup,
