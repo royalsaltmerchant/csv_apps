@@ -1,0 +1,4 @@
+windows
+pyinstaller --onefile --windowed --distpath win_build --workpath win_build_temp --name "CSV Console" app.py
+mac
+...

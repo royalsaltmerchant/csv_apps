@@ -39,7 +39,7 @@ class CSVViewerApp(CSVState):
     def __init__(self, root: tk.Tk):
         super().__init__()
         self.root = root
-        self.root.title("CSV Viewer")
+        self.root.title("CSV Console")
 
         # Set a uniform font and treeview background color
         self.font = (Style.FONT_MAIN, Style.FONT_SIZE_MAIN)  # Monospace font
@@ -73,7 +73,7 @@ class CSVViewerApp(CSVState):
             ],  # Background color for selected rows
         )
 
-        self.app_name = "CSVViewerApp"
+        self.app_name = "CSV Console"
         self.app_support_dir = os.path.join(
             os.path.expanduser("~"), "Library", "Application Support", self.app_name
         )
