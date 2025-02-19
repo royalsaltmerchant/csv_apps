@@ -5,7 +5,7 @@ a = Analysis(
     ['app.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('logo.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,11 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['logo.icns'],
-)
-app = BUNDLE(
-    exe,
-    name='CSV Console.app',
-    icon='logo.icns',
-    bundle_identifier=None,
+    icon=['logo.ico'],
 )
