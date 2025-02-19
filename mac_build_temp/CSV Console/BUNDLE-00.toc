@@ -1,3 +1,0 @@
-([('CSV Console',
-   '/Users/julianranieri/Desktop/Code_Base/csv_apps/mac_build/CSV Console',
-   'EXECUTABLE')],)

@@ -1,5 +1,0 @@
-windows
-pyinstaller --onefile --windowed --distpath win_build --workpath win_build_temp --icon=logo.ico --name "CSV Console" app.py
-mac
-pyinstaller --onefile --windowed --distpath mac_build --workpath mac_build_temp --icon=logo.icns --name "CSV Console" app.py
-...
