@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import ttk, filedialog
 import csv
@@ -426,4 +427,11 @@ if __name__ == "__main__":
 
     app = CSVViewerApp(root)
     root.geometry(f"{screen_width}x{screen_height}")
+
+        # Handle "Open With" file arguments
+    if len(sys.argv) > 1:  # If a file is passed as an argument
+        file_path = sys.argv[1]
+        if os.path.exists(file_path):
+            app.load_file(file_path)  # Open the file immediately
+            
     root.mainloop()
