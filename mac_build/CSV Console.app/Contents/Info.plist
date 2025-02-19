@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>CSV Console</string>
 	<key>CFBundleIconFile</key>
-	<string>icon-windowed.icns</string>
+	<string>logo.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>CSV Console</string>
 	<key>CFBundleInfoDictionaryVersion</key>

@@ -35,10 +35,11 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['logo.icns'],
 )
 app = BUNDLE(
     exe,
     name='CSV Console.app',
-    icon=None,
+    icon='logo.icns',
     bundle_identifier=None,
 )
