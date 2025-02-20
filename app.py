@@ -340,8 +340,7 @@ class CSVViewerApp(CSVState):
 
             popup.destroy()
             self.save_to_file()
-            if not create_new:
-                self.update_display_data()
+            self.update_display_data()
 
         save_button = tk.Button(
             popup,
