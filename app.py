@@ -421,6 +421,14 @@ class CSVViewerApp(CSVState):
 if __name__ == "__main__":
     root = tk.Tk()
 
+    icon_path = os.path.join(os.path.abspath("."), "logo.ico")
+
+    if sys.platform.startswith("win"):
+        # When running from a PyInstaller EXE, use sys._MEIPASS
+        if getattr(sys, 'frozen', False):
+            icon_path = os.path.join(sys._MEIPASS, "logo.ico")
+        root.iconbitmap(icon_path)
+
     # Get the screen width and height
     screen_width = math.floor(root.winfo_screenwidth() * 0.8)
     screen_height = math.floor(root.winfo_screenheight() * 0.8)
