@@ -1,2 +1,4 @@
 __pycache__
-.DS_Store
+*/.DS_Store
+mac_build_temp
+win_build_temp

@@ -1,4 +1,7 @@
 windows
 pyinstaller --onefile --windowed --distpath win_build --workpath win_build_temp --icon=logo.ico --name "CSV Zero" app.py
 mac
-pyinstaller --onefile --windowed --distpath mac_build --workpath mac_build_temp --icon=logo.icns --name "CSV Zero" app.py
+pyinstaller --onedir --noconsole --windowed --distpath mac_build --workpath mac_build_temp --icon=logo.icns --name "CSV Zero" app.py
+
+mac sign
+codesign --force --deep --sign "Apple Development: Julian Ranieri (HY3B838W22)" mac_build/CSV\ Zero
