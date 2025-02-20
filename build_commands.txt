@@ -1,5 +1,5 @@
 windows
-pyinstaller --onefile --windowed --distpath win_build --workpath win_build_temp --icon=logo.ico --name "CSV Zero" app.py
+pyinstaller --onefile --windowed --distpath win_build --workpath win_build_temp --icon=logo.ico --add-data "logo.ico;." --name "CSV Zero" app.py
 mac
 pyinstaller --onedir --noconsole --windowed --distpath mac_build --workpath mac_build_temp --icon=logo.icns --name "CSV Zero" app.py
 
