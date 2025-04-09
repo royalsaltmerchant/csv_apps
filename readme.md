@@ -21,7 +21,7 @@
 
 This app is packaged using [Inno Setup](https://jrsoftware.org/isinfo.php). Simply download and run the installer:
 
-👉 [Download CSVZeroInstaller_windows.exe](#)
+👉 [Download CSV Zero Installer for Windows](https://github.com/royalsaltmerchant/csv_apps/raw/main/CSVZeroInstaller_windows.exe)
 
 No Python installation required. Works out of the box on Windows 10+.
 
