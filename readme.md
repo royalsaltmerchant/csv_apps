@@ -51,7 +51,7 @@ MacOS installer not currently available...
 |----------------|-----------------|
 | Insert Row     | ⌘ Cmd + I       |
 | Remove Row     | ⌘ Cmd + R       |
-| Edit Row       | ⌘ Cmd + Double Click |
+| Edit Row       | Double Click |
 | Search         | Press **Enter** |
 
 ---
